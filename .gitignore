@@ -1,0 +1,25 @@
+# Virtual environment
+env/
+
+# FastF1 cached data (large binary files)
+data/fastf1_cache/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Trained model files (large binaries)
+models/*.pkl
+models/*.joblib
+
+# IDE settings
+.vscode/
+.idea/
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
