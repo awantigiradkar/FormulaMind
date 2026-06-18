@@ -1,106 +1,87 @@
 """
-FormulaMind - Premium Styling Module
-Official F1 team colors and Plotly layout helpers.
+Centralized styling configurations and Plotly templates for FormulaMind.
+Provides consistent colors, fonts, and dark mode theme components.
 """
 
-# Official F1 Team Colors (2023-2024 Season)
-
-# These hex codes match the exact colors used in F1 TV broadcasts.
-# Source: Official FIA technical regulations & team brand guidelines.
-
+# F1 Team Color Palette (Official HEX codes)
 TEAM_COLORS = {
-    "Red Bull Racing":    "#3671C6",
-    "Ferrari":            "#E8002D",
-    "Mercedes":           "#27F4D2",
-    "McLaren":            "#FF8000",
-    "Aston Martin":       "#229971",
-    "Alpine":             "#FF87BC",
-    "Williams":           "#64C4FF",
-    "AlphaTauri":         "#6692FF",
-    "Alfa Romeo":         "#C92D4B",
-    "Haas F1 Team":       "#B6BABD",
+    'mercedes': '#27F4D2',      # Neon Teal
+    'ferrari': '#F91536',       # Racing Red
+    'red bull': '#3671C6',      # Royal Blue
+    'mclaren': '#F58020',       # Papaya Orange
+    'aston martin': '#229971',  # Racing Green
+    'alpine': '#0093CC',        # Light Blue
+    'williams': '#37BEDD',      # Cyan
+    'haas': '#B6BABD',          # White/Silver
+    'sauber': '#52E252',        # Neon Green
+    'rb': '#6692FF',            # Visa Cash App RB Blue
 }
 
-# Short-name mapping (FastF1 uses 3-letter driver codes)
-DRIVER_TEAM = {
-    "VER": "Red Bull Racing",
-    "PER": "Red Bull Racing",
-    "LEC": "Ferrari",
-    "SAI": "Ferrari",
-    "HAM": "Mercedes",
-    "RUS": "Mercedes",
-    "NOR": "McLaren",
-    "PIA": "McLaren",
-    "ALO": "Aston Martin",
-    "STR": "Aston Martin",
-    "GAS": "Alpine",
-    "OCO": "Alpine",
-    "ALB": "Williams",
-    "SAR": "Williams",
-    "TSU": "AlphaTauri",
-    "DEV": "AlphaTauri",
-    "BOT": "Alfa Romeo",
-    "ZHO": "Alfa Romeo",
-    "MAG": "Haas F1 Team",
-    "HUL": "Haas F1 Team",
+# Tire Compound Colors (Official Pirelli color scheme)
+TIR_COMPOUND_COLORS = {
+    'SOFT': '#FF3333',          # Red
+    'MEDIUM': '#FFD300',        # Yellow
+    'HARD': '#FFFFFF',          # White
+    'INTERMEDIATE': '#39FF14',   # Green
+    'WET': '#00A0FF',           # Blue
+    'UNKNOWN': '#888888'
 }
 
-# Premium dark theme colors for our dashboard
-BACKGROUND_COLOR = "#0F1117"
-GRID_COLOR = "#1E2130"
-TEXT_COLOR = "#E0E0E0"
-ACCENT_COLOR = "#FF1E00"  # F1 signature red
+# Theme Color Constants for Premium Dark Theme
+BG_DARK = '#0F1219'          # Slate Black
+CARD_DARK = '#161B26'        # Dark Card Background
+TEXT_LIGHT = '#F1F5F9'       # Off-white
+TEXT_MUTED = '#94A3B8'       # Cool Gray
+ACCENT_CYAN = '#00E5FF'      # Cyber Cyan
+ACCENT_PINK = '#FF007F'      # Cyber Pink
 
-
-def get_driver_color(driver_code):
-    """
-    The official team color for a driver.
-
-    Args:
-        driver_code (str): 3-letter driver code, e.g. 'VER', 'HAM'
-
-    Returns:
-        str: Hex color string, e.g. '#3671C6'
-    """
-    team = DRIVER_TEAM.get(driver_code, None)
-    if team:
-        return TEAM_COLORS.get(team, "#FFFFFF")
-    return "#FFFFFF"  # Default white if unknown driver
-
+FONT_FAMILY = "Inter, Montserrat, Roboto, Helvetica, Arial, sans-serif"
 
 def apply_premium_layout(fig, title=""):
     """
-    Apply premium dark theme to any Plotly figure.
-    This gives every chart a consistent, broadcast-quality look.
-
-    Args:
-        fig: A Plotly figure object
-        title (str): Chart title text
+    Applies a premium, dark glassmorphism layout to any Plotly figure.
     """
     fig.update_layout(
-        title=dict(
-            text=title,
-            font=dict(size=20, color=TEXT_COLOR, family="Arial Black"),
-            x=0.5,           # Center the title
-            xanchor="center",
-        ),
-        paper_bgcolor=BACKGROUND_COLOR,
-        plot_bgcolor=BACKGROUND_COLOR,
-        font=dict(color=TEXT_COLOR, family="Arial"),
-        legend=dict(
-            bgcolor="rgba(0,0,0,0.5)",
-            bordercolor=GRID_COLOR,
-            borderwidth=1,
-            font=dict(color=TEXT_COLOR),
+        title={
+            'text': title,
+            'y': 0.95,
+            'x': 0.5,
+            'xanchor': 'center',
+            'yanchor': 'top',
+            'font': {'size': 18, 'color': TEXT_LIGHT, 'family': FONT_FAMILY}
+        },
+        paper_bgcolor='rgba(0,0,0,0)',  # Transparent paper
+        plot_bgcolor='rgba(22, 27, 38, 0.5)',  # Translucent dark grid background
+        font=dict(color=TEXT_LIGHT, family=FONT_FAMILY),
+        margin=dict(l=40, r=40, t=60, b=40),
+        hovermode="x unified",
+        hoverlabel=dict(
+            bgcolor=CARD_DARK,
+            font_size=12,
+            font_family=FONT_FAMILY,
+            bordercolor=TEXT_MUTED
         ),
         xaxis=dict(
-            gridcolor=GRID_COLOR,
-            zerolinecolor=GRID_COLOR,
+            gridcolor='#222938',
+            linecolor='#334155',
+            linewidth=1,
+            zeroline=False,
+            tickfont=dict(color=TEXT_MUTED),
+            title_font=dict(color=TEXT_LIGHT)
         ),
         yaxis=dict(
-            gridcolor=GRID_COLOR,
-            zerolinecolor=GRID_COLOR,
+            gridcolor='#222938',
+            linecolor='#334155',
+            linewidth=1,
+            zeroline=False,
+            tickfont=dict(color=TEXT_MUTED),
+            title_font=dict(color=TEXT_LIGHT)
         ),
-        margin=dict(l=60, r=30, t=60, b=50),
+        legend=dict(
+            bgcolor='rgba(15, 18, 25, 0.8)',
+            bordercolor='#2D3748',
+            borderwidth=1,
+            font=dict(size=10, color=TEXT_LIGHT)
+        )
     )
-    return fig
+    return fig  
