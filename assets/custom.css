@@ -1,0 +1,97 @@
+/* Custom Premium Styling for FormulaMind Streamlit App */
+
+/* Global App Backdrop */
+html, body, [data-testid="stAppViewContainer"] {
+    background-color: #0F1219 !important;
+    background-image: radial-gradient(circle at 50% 50%, #171E2D 0%, #0F1219 100%) !important;
+    color: #F1F5F9 !important;
+    font-family: 'Inter', 'Montserrat', -apple-system, sans-serif !important;
+}
+
+/* Sidebar Panel Styling */
+[data-testid="stSidebar"] {
+    background-color: #0B0D13 !important;
+    border-right: 1px solid #1E293B !important;
+}
+
+/* Translucent Glassmorphism Cards & Metrics Container */
+div.stCard, div[data-testid="metric-container"] {
+    background: rgba(22, 27, 38, 0.5) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 12px !important;
+    padding: 1.5rem !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Neon Glow F1 Branding Title Text */
+.glow-text {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    background: linear-gradient(90deg, #00E5FF, #FF007F);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 20px rgba(0, 229, 255, 0.2);
+}
+
+/* Custom Nav Tabs Styling */
+button[data-baseweb="tab"] {
+    color: #94A3B8 !important;
+    background-color: transparent !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    border: none !important;
+    padding: 10px 20px !important;
+}
+
+button[data-baseweb="tab"][aria-selected="true"] {
+    color: #00E5FF !important;
+    border-bottom: 2px solid #00E5FF !important;
+}
+
+/* Primary Neon Control Button Hover States */
+button[kind="primary"] {
+    background-color: #00E5FF !important;
+    color: #0F1219 !important;
+    font-weight: 700 !important;
+    border-radius: 8px !important;
+    border: none !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.4) !important;
+}
+
+button[kind="primary"]:hover {
+    background-color: #00B4D8 !important;
+    box-shadow: 0 0 20px rgba(0, 229, 255, 0.8) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* Layout dividers */
+hr {
+    border-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Metrics styles */
+[data-testid="stMetricLabel"] {
+    color: #94A3B8 !important;
+    font-size: 14px !important;
+}
+
+[data-testid="stMetricValue"] {
+    color: #F1F5F9 !important;
+    font-size: 32px !important;
+    font-weight: 700 !important;
+}
+
+/* Custom Footer layout alignment */
+.footer-text {
+    color: #475569;
+    font-size: 12px;
+    text-align: center;
+    margin-top: 3rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 1rem;
+}

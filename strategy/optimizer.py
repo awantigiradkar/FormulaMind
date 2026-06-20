@@ -12,11 +12,14 @@ import pandas as pd
 DEFAULT_MODEL_PATH = os.path.join("models", "tire_model.pkl")
 
 class StrategyOptimizer:
-    def __init__(self, model_path=DEFAULT_MODEL_PATH):
+    def __init__(self, model_path=DEFAULT_MODEL_PATH, model_obj=None):
         self.model_path = model_path
         self.model_data = None
-        self.model = None
-        self.load_model()
+        self.model = model_obj
+        
+        # If no model object is passed directly, load the fallback model from disk
+        if self.model is None:
+            self.load_model()
         
     def load_model(self):
         """Loads the serialized ML model and features metadata."""

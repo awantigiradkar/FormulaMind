@@ -129,6 +129,7 @@ def compare_driver_telemetry(session, driver_a: str, driver_b: str, lap_a=None, 
     brake_a = np.interp(distance_grid, tel_a['Distance'], tel_a['Brake'].astype(float))
     gear_a = np.interp(distance_grid, tel_a['Distance'], tel_a['nGear'])
     rpm_a = np.interp(distance_grid, tel_a['Distance'], tel_a['RPM'])
+    drs_a = np.interp(distance_grid, tel_a['Distance'], tel_a['DRS']) if 'DRS' in tel_a.columns else np.zeros(points)
     
     # 4. Interpolate variables for Driver B
     speed_b = np.interp(distance_grid, tel_b['Distance'], tel_b['Speed'])
@@ -136,6 +137,7 @@ def compare_driver_telemetry(session, driver_a: str, driver_b: str, lap_a=None, 
     brake_b = np.interp(distance_grid, tel_b['Distance'], tel_b['Brake'].astype(float))
     gear_b = np.interp(distance_grid, tel_b['Distance'], tel_b['nGear'])
     rpm_b = np.interp(distance_grid, tel_b['Distance'], tel_b['RPM'])
+    drs_b = np.interp(distance_grid, tel_b['Distance'], tel_b['DRS']) if 'DRS' in tel_b.columns else np.zeros(points)
     
     # 5. Calculate Delta Time (dynamic time gap along the lap)
     delta_time = np.zeros(points)
@@ -167,6 +169,8 @@ def compare_driver_telemetry(session, driver_a: str, driver_b: str, lap_a=None, 
         f'Gear_{driver_b}': np.round(gear_b).astype(int),
         f'RPM_{driver_a}': rpm_a,
         f'RPM_{driver_b}': rpm_b,
+        f'DRS_{driver_a}': drs_a,
+        f'DRS_{driver_b}': drs_b,
         'DeltaTime': delta_time
     })
     
@@ -182,3 +186,25 @@ def compare_driver_telemetry(session, driver_a: str, driver_b: str, lap_a=None, 
     }
     
     return df_aligned, metadata
+
+def get_session_weather(session):
+    """
+    Retrieves a summary of weather conditions recorded during the session.
+    Returns average values for air temperature, track temperature, and humidity,
+    plus a flag indicating if rain occurred.
+    """
+    try:
+        wd = session.weather_data
+        if wd.empty:
+            return None
+            
+        summary = {
+            'AirTemp': float(wd['AirTemp'].mean()),
+            'TrackTemp': float(wd['TrackTemp'].mean()),
+            'Humidity': float(wd['Humidity'].mean()),
+            'WindSpeed': float(wd['WindSpeed'].mean()),
+            'Rainfall': bool(wd['Rainfall'].any())
+        }
+        return summary
+    except Exception:
+        return None
