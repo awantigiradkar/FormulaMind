@@ -1,6 +1,7 @@
 ---
 title: FormulaMind
-colorFrom: cyan
+-colorFrom: cyan
++colorFrom: blue
 colorTo: pink
 sdk: docker
 app_port: 7860
