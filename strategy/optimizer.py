@@ -54,7 +54,7 @@ class StrategyOptimizer:
             pred = self.model.predict(features)[0]
         return pred
 
-    def simulate_strategy(self, total_laps: int, pit_laps: list, compounds: list, pit_loss=20.0):
+    def simulate_strategy(self, total_laps: int, pit_laps: list, compounds: list, pit_loss=20.0, driver_offset=0.0):
         """
         Vectorized stint-based strategy simulator.
         Predicts lap times for each stint in batch for high performance.
@@ -109,7 +109,8 @@ class StrategyOptimizer:
                 # Add pit stop time loss (tyre change overhead) to the pit lap
                 if is_pit_lap:
                     lap_time_final += pit_loss
-                    
+
+                lap_time_final += driver_offset    
                 total_time += lap_time_final
                 
                 lap_details.append({
@@ -124,7 +125,7 @@ class StrategyOptimizer:
                 
         return total_time, pd.DataFrame(lap_details)
 
-    def optimize_1_stop(self, total_laps: int, c1: str, c2: str, pit_loss=20.0, min_lap=10, max_lap=42):
+    def optimize_1_stop(self, total_laps: int, c1: str, c2: str, pit_loss=20.0, min_lap=10, max_lap=42, driver_offset=0.0):
         """
         Finds the mathematically optimal pit lap for a 1-stop strategy (c1 -> c2).
         """
@@ -134,7 +135,7 @@ class StrategyOptimizer:
         
         # Grid search over possible pit laps
         for pit_lap in range(min_lap, max_lap + 1):
-            total_time, df_laps = self.simulate_strategy(total_laps, [pit_lap], [c1, c2], pit_loss)
+            total_time, df_laps = self.simulate_strategy(total_laps, [pit_lap], [c1, c2], pit_loss, driver_offset)
             if total_time < best_time:
                 best_time = total_time
                 best_pit_lap = pit_lap
@@ -147,7 +148,7 @@ class StrategyOptimizer:
             'laps_dataframe': best_df
         }
 
-    def find_best_strategies(self, total_laps=52, pit_loss=20.0):
+    def find_best_strategies(self, total_laps=52, pit_loss=20.0, driver_offset=0.0):
         """
         Evaluates and ranks common strategy variations for a given race distance.
         """
@@ -164,7 +165,7 @@ class StrategyOptimizer:
             min_l = 10 if c1 == 'MEDIUM' else (6 if c1 == 'SOFT' else 18)
             max_l = 32 if c1 == 'MEDIUM' else (20 if c1 == 'SOFT' else 40)
             
-            res = self.optimize_1_stop(total_laps, c1, c2, pit_loss, min_l, max_l)
+            res = self.optimize_1_stop(total_laps, c1, c2, pit_loss, min_l, max_l, driver_offset)
             results.append(res)
             
         # Evaluate a common 2-stop strategy: Medium -> Hard -> Medium
@@ -176,7 +177,7 @@ class StrategyOptimizer:
             for p2 in range(30, 42):
                 if p2 > p1 + 5:  # Middle stint must be at least 5 laps
                     total_time, df_laps = self.simulate_strategy(
-                        total_laps, [p1, p2], ['MEDIUM', 'HARD', 'MEDIUM'], pit_loss
+                        total_laps, [p1, p2], ['MEDIUM', 'HARD', 'MEDIUM'], pit_loss, driver_offset
                     )
                     if total_time < best_2stop_time:
                         best_2stop_time = total_time

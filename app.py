@@ -27,6 +27,7 @@ from simulation import RaceSimulator
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, r2_score
 
+
 @st.cache_data
 def get_gp_list(year):
     """
@@ -51,7 +52,37 @@ def get_gp_list(year):
             "Mexico City Grand Prix", "São Paulo Grand Prix", "Las Vegas Grand Prix",
             "Abu Dhabi Grand Prix"
         ]
-    
+
+def calculate_driver_offsets(session):
+    """
+    Calculates each driver's relative pace offset (in seconds)
+    compared to the session's overall median lap time.
+    """
+    try:
+        laps = session.laps
+        laps_clean = laps[laps['PitInTime'].isna() & laps['PitOutTime'].isna()].copy()
+        laps_clean = laps_clean[laps_clean['TrackStatus'] == '1'].copy()
+        laps_clean['LapTimeSecs'] = laps_clean['LapTime'].dt.total_seconds()
+        
+        overall_median = laps_clean['LapTimeSecs'].median()
+        
+        driver_offsets = {}
+        for d in session.drivers:
+            try:
+                info = session.get_driver(d)
+                abbr = info['Abbreviation']
+                drv_laps = laps_clean[laps_clean['Driver'] == abbr]
+                if len(drv_laps) > 3:
+                    drv_median = drv_laps['LapTimeSecs'].median()
+                    # Clamp offset between -1.5s and +1.5s to keep it realistic
+                    offset = np.clip(drv_median - overall_median, -1.5, 1.5)
+                    driver_offsets[abbr] = float(offset)
+            except Exception:
+                pass
+        return driver_offsets
+    except Exception:
+        return {}
+
 def train_dynamic_model(session):
     """
     Cleans lap data from the loaded race session and trains a 
@@ -136,7 +167,8 @@ def load_strategy_engine():
         return None, None
 
 # ----------------- SIDEBAR CONTROLS -----------------
-st.sidebar.markdown("### 🛠️ Session Settings")
+st.sidebar.markdown("Session Settings")
+
 year = st.sidebar.selectbox("Season", [2023, 2024], index=0)
 
 # Fetch the official Grand Prix list for the selected season
@@ -197,6 +229,8 @@ if load_btn:
                 st.session_state['model_mae'] = mae
                 st.session_state['model_r2'] = r2
                 st.session_state['model_gp'] = gp
+
+                st.session_state['driver_offsets'] = calculate_driver_offsets(race_session)
                 
                 st.sidebar.success(f"Connected & AI Trained for {gp}!")
                 
@@ -293,7 +327,7 @@ with tab1:
                         st.plotly_chart(plot_driver_scorecard(df_aligned, metadata), use_container_width=True)
                         
                     # --- NEW: ATLAS Corner Zoom Panel ---
-                    st.markdown("#### 🔬 ATLAS Apex Micro-Telemetry Zoom")
+                    st.markdown("#### ATLAS Apex Micro-Telemetry Zoom")
                     st.markdown("Zoom into individual corner zones to analyze driver deceleration and acceleration timings.")
                     
                     apexes = detect_corners(df_aligned, driver_a)
@@ -309,12 +343,12 @@ with tab1:
                         # Display stats cards
                         c_col1, c_col2 = st.columns(2)
                         with c_col1:
-                            st.markdown(f"**🏎️ {driver_a} Performance:**")
+                            st.markdown(f"**{driver_a} Performance:**")
                             st.markdown(f"- **Braking Point:** `{int(stats_corner[driver_a]['brake_point'])}m`")
                             st.markdown(f"- **Apex Speed:** `{stats_corner[driver_a]['apex_speed']:.1f} km/h`")
                             st.markdown(f"- **Throttle Pick-up:** `{int(stats_corner[driver_a]['throttle_point'])}m`")
                         with c_col2:
-                            st.markdown(f"**🏎️ {driver_b} Performance:**")
+                            st.markdown(f"**{driver_b} Performance:**")
                             st.markdown(f"- **Braking Point:** `{int(stats_corner[driver_b]['brake_point'])}m`")
                             st.markdown(f"- **Apex Speed:** `{stats_corner[driver_b]['apex_speed']:.1f} km/h`")
                             st.markdown(f"- **Throttle Pick-up:** `{int(stats_corner[driver_b]['throttle_point'])}m`")
@@ -329,7 +363,7 @@ with tab1:
                     # Exporter Button
                     csv_data = df_aligned.to_csv(index=False).encode('utf-8')
                     st.download_button(
-                        label="📥 Download Aligned Telemetry Data (CSV)",
+                        label="Download Aligned Telemetry Data (CSV)",
                         data=csv_data,
                         file_name=f"F1_telemetry_{driver_a}_vs_{driver_b}_{year}_{gp}.csv",
                         mime="text/csv",
@@ -350,6 +384,19 @@ with tab2:
     if optimizer is None:
         st.error("No active ML model. Please connect to a Grand Prix in the sidebar first to train the AI.")
     else:
+        # --- NEW: Driver Selection for Strategy Customization ---
+        if st.session_state.get('session_loaded', False):
+            drivers_df = st.session_state['drivers_list']
+            driver_abbrs = list(drivers_df['Abbreviation'].unique())
+            selected_opt_driver = st.selectbox("Select Driver to Optimize", driver_abbrs, key="opt_drv")
+            
+            # Fetch offset
+            offsets = st.session_state.get('driver_offsets', {})
+            drv_offset = offsets.get(selected_opt_driver, 0.0)
+        else:
+            drv_offset = 0.0
+            selected_opt_driver = "Average Grid"
+
         # Display the training performance of the active model
         st.markdown(f"**Active AI Model:** trained on **{st.session_state.get('model_gp', 'Unknown')}GP** | MAE: **{st.session_state.get('model_mae', 0.0):.3f}s** | R² Score: **{st.session_state.get('model_r2', 0.0):.1%}**")
         col_s1, col_s2 = st.columns([0.4, 0.6])
@@ -375,6 +422,7 @@ with tab2:
             for t_life in laps_arr:
                 lap_num = start_lap + t_life - 1
                 base_time = optimizer.predict_lap_time(t_life, lap_num, compound)
+                base_time += drv_offset
                 if fuel_correction:
                     # Subtracting the fuel weight benefit reveals the true, raw tire performance decay curve
                     base_time += (lap_num * 0.065)
@@ -392,7 +440,7 @@ with tab2:
             fig_decay = go.Figure()
             fig_decay.add_trace(go.Scatter(x=laps_arr, y=pred_times, mode='lines+markers', line=dict(color='#00E5FF', width=2)))
             fig_decay.update_layout(xaxis_title="Tyre Life (Laps)", yaxis_title="Predicted Lap Time (s)")
-            from utils.styles import apply_premium_layout
+            from utils.styles import apply_premium_layout, get_driver_color
             fig_decay = apply_premium_layout(fig_decay, f"Predicted Pace Dropoff for {compound} compound")
             st.plotly_chart(fig_decay, use_container_width=True)
             
@@ -402,7 +450,9 @@ with tab2:
                 st.session_state['opt_results'] = None
                 
             if run_opt or st.session_state['opt_results'] is None:
-                st.session_state['opt_results'] = optimizer.find_best_strategies(total_laps=total_laps, pit_loss=pit_loss)
+                st.session_state['opt_results'] = optimizer.find_best_strategies(
+                    total_laps=total_laps, pit_loss=pit_loss, driver_offset=drv_offset
+                )
                 
             results = st.session_state['opt_results']
             
@@ -433,28 +483,33 @@ with tab2:
                     st.markdown("#### 🚦 Pit Stop Traffic Window Planner")
                     st.markdown("Projects where your driver will re-enter the race relative to other cars. Evaluates clean air vs dirty air traffic zones.")
                     
-                    # We simulate traffic against typical competitor gap spacings
-                    # Get the actual median lap time of the current GP race session to scale competitors dynamically
+                    # 1. Estimate the driver's own average predicted base pace on this track
                     try:
-                        # Extract the median lap time from the loaded session's laps database
-                        laps_df = st.session_state['session_obj'].laps
-                        laps_df['Secs'] = laps_df['LapTime'].dt.total_seconds()
-                        median_lap_time = float(laps_df['Secs'].median())
+                        _, df_base = optimizer.simulate_strategy(
+                            total_laps, [], ['MEDIUM'], 0.0, driver_offset=drv_offset
+                        )
+                        driver_base_pace = float(df_base['LapTime'].mean())
                     except Exception:
-                        median_lap_time = 90.0  # Fallback
+                        driver_base_pace = 93.0  # Fallback race pace
                         
-                    # Scale competitors relative to the actual track pace
+                    # 2. Scale competitors dynamically relative to the driver's own base pace
                     competitors = {
-                        'HAM': {'lap_time_avg': median_lap_time + 0.15},
-                        'NOR': {'lap_time_avg': median_lap_time + 0.45}
+                        'HAM (Leader Pack)': {'lap_time_avg': driver_base_pace - 0.25},
+                        'NOR (Leader Pack)': {'lap_time_avg': driver_base_pace + 0.15},
+                        'ALB (Midfield)': {'lap_time_avg': driver_base_pace + 0.80},
+                        'TSU (Midfield)': {'lap_time_avg': driver_base_pace + 1.20},
+                        'BOT (Backmarker)': {'lap_time_avg': driver_base_pace + 2.00}
                     }
                     
                     traffic_laps = []
                     # Map out pit laps from Lap 10 to Lap 40
                     for plap in range(10, 41):
-                        tot_t, df_sim = optimizer.simulate_strategy(total_laps, [plap], ['MEDIUM', 'HARD'], pit_loss)
+                        # Simulate the strategy for the selected driver
+                        tot_t, df_sim = optimizer.simulate_strategy(
+                            total_laps, [plap], ['MEDIUM', 'HARD'], pit_loss, driver_offset=drv_offset
+                        )
                         
-                        # Verstappen cumulative time post-pit at lap plap
+                        # Driver's cumulative time post-pit at lap plap
                         ver_post_pit = df_sim[df_sim['LapNumber'] == plap]['TotalCumulativeTime'].values[0]
                         
                         status = "Clean Air"
@@ -466,7 +521,7 @@ with tab2:
                             comp_time = plap * c_cfg['lap_time_avg']
                             gap = ver_post_pit - comp_time
                             
-                            # If they exit within +/- 2 seconds, they are in dirty air traffic
+                            # If they exit within +/- 2.0 seconds, they are in dirty air traffic
                             if abs(gap) < 2.0:
                                 status = "Traffic Blocker"
                                 blocker = comp
@@ -561,20 +616,19 @@ with tab4:
     col_sim1, col_sim2 = st.columns([0.4, 0.6])
     with col_sim1:
         st.markdown("#### Driver Stint Strategies")
-        # VER Config
-        st.markdown("🏁 **VER Strategy**")
-        ver_stints = st.multiselect("VER Compounds Stints", ["SOFT", "MEDIUM", "HARD", "INTERMEDIATE"], default=["MEDIUM", "HARD", "INTERMEDIATE"], key="ver_st")
-        ver_pits = st.text_input("VER Pit Laps (comma separated)", value="20,42", key="ver_pt")
         
-        # HAM Config
-        st.markdown("🏁 **HAM Strategy**")
-        ham_stints = st.multiselect("HAM Compounds Stints", ["SOFT", "MEDIUM", "HARD", "INTERMEDIATE"], default=["MEDIUM", "HARD"], key="ham_st")
-        ham_pits = st.text_input("HAM Pit Laps (comma separated)", value="22", key="ham_pt")
-        
-        # NOR Config
-        st.markdown("🏁 **NOR Strategy**")
-        nor_stints = st.multiselect("NOR Compounds Stints", ["SOFT", "MEDIUM", "HARD", "INTERMEDIATE"], default=["SOFT", "MEDIUM", "HARD", "INTERMEDIATE"], key="nor_st")
-        nor_pits = st.text_input("NOR Pit Laps (comma separated)", value="10,30,42", key="nor_pt")
+        if st.session_state['session_loaded']:
+            drivers_df = st.session_state['drivers_list']
+            driver_abbrs = list(drivers_df['Abbreviation'].unique())
+        else:
+            driver_abbrs = ["VER", "HAM", "NOR", "LEC", "SAI", "ALO"]
+            
+        # Let the user select which drivers to run in the simulator
+        selected_sim_drivers = st.multiselect(
+            "Select Drivers to Simulate", 
+            driver_abbrs, 
+            default=["VER", "HAM", "NOR"][:len(driver_abbrs)]
+        )
         
         # Helper to parse laps list input
         def parse_laps(laps_str):
@@ -585,11 +639,29 @@ with tab4:
             except:
                 return []
                 
-        drivers_configs = {
-            'VER': {'compounds': ver_stints, 'pit_laps': parse_laps(ver_pits)},
-            'HAM': {'compounds': ham_stints, 'pit_laps': parse_laps(ham_pits)},
-            'NOR': {'compounds': nor_stints, 'pit_laps': parse_laps(nor_pits)}
-        }
+        # Generate input widgets dynamically for each selected driver
+        drivers_configs = {}
+        for driver in selected_sim_drivers:
+            with st.expander(f"Strategy Config: {driver}", expanded=True):
+                # Side-by-side stint compounds and pit lap inputs
+                c1, c2 = st.columns(2)
+                with c1:
+                    stints = st.multiselect(
+                        f"Tyres", ["SOFT", "MEDIUM", "HARD", "INTERMEDIATE"], 
+                        default=["MEDIUM", "HARD"][:len(driver_abbrs)] if len(driver_abbrs) >= 2 else ["MEDIUM"], 
+                        key=f"stints_{driver}"
+                    )
+                with c2:
+                    pits_str = st.text_input(
+                        f"Pit Laps", 
+                        value="20", 
+                        key=f"pits_{driver}"
+                    )
+                
+                drivers_configs[driver] = {
+                    'compounds': stints,
+                    'pit_laps': parse_laps(pits_str)
+                }
         
         st.markdown("#### Dynamic Events")
         sc_input = st.text_input("Safety Car Laps (comma separated)", value="35,36,37")
@@ -603,20 +675,23 @@ with tab4:
             rain_lap = None
             rain_intensity = None
             
-        run_sim = st.button("🏁 Start Race Simulation", type="primary")
+        run_sim = st.button("Start Race Simulation", type="primary")
         
     with col_sim2:
         st.markdown("Live Telemetry Sim Board")
         if run_sim:
             with st.spinner("Simulating telemetry ticks..."):
-                optimizer = st.session_state.get('optimizer', None)
                 simulator = RaceSimulator(optimizer)
+                # Retrieve stored driver offsets from session state
+                offsets = st.session_state.get('driver_offsets', None)
+                
                 df_history, states = simulator.run_race_simulation(
                     drivers_configs=drivers_configs,
                     total_laps=52,
                     sc_laps=sc_laps,
                     rain_lap=rain_lap,
-                    rain_intensity=rain_intensity
+                    rain_intensity=rain_intensity,
+                    driver_offsets=offsets  # Pass the offsets here!
                 )
                 
                 # Standings dataframe display
@@ -628,7 +703,7 @@ with tab4:
                     standings_data.append({
                         'Pos': row['Position'],
                         'Driver': row['Driver'],
-                        'Final Tyre': row['Compound'],
+                        'Final Tyre': row['Compound'].upper(),
                         'Race Time': f"{row['CumulativeTime'] / 60.0:.2f} mins",
                         'Gap to Winner': "Leader" if row['Position'] == 1 else f"+{row['GapToLeader']:.2f}s"
                     })
@@ -638,7 +713,7 @@ with tab4:
                 fig_pos = go.Figure()
                 for driver in drivers_configs.keys():
                     df_drv = df_history[df_history['Driver'] == driver].sort_values('LapNumber')
-                    team_color = '#27F4D2' if driver == 'HAM' else ('#3671C6' if driver == 'VER' else '#F58020')
+                    team_color = get_driver_color(driver)
                     fig_pos.add_trace(go.Scatter(
                         x=df_drv['LapNumber'],
                         y=df_drv['Position'],
@@ -655,7 +730,7 @@ with tab4:
                 fig_ltimes = go.Figure()
                 for driver in drivers_configs.keys():
                     df_drv = df_history[df_history['Driver'] == driver].sort_values('LapNumber')
-                    team_color = '#27F4D2' if driver == 'HAM' else ('#3671C6' if driver == 'VER' else '#F58020')
+                    team_color = get_driver_color(driver)
                     fig_ltimes.add_trace(go.Scatter(
                         x=df_drv['LapNumber'],
                         y=df_drv['LapTime'],
@@ -677,7 +752,7 @@ with tab5:
     # Initialize chat history in session state
     if 'chat_messages' not in st.session_state:
         st.session_state['chat_messages'] = [
-            {"role": "assistant", "content": "Copy that. F1 AI Race Engineer online. Ask me about track weather, undercut threats, or optimal pit strategies."}
+            {"role": "assistant", "content": "**[RADIO COMM]:** Copy that. F1 AI Race Engineer online. Ask me about track weather, undercut threats, or optimal pit strategies."}
         ]
         
     # Render chat history
@@ -711,7 +786,7 @@ with tab5:
                     results = optimizer.find_best_strategies(total_laps=52)
                     best = results[0]
                     total_duration = best['total_time_secs'] / 60.0
-                    response = f"**Pit Wall Analysis:** The mathematically fastest strategy is a **1-stop {best['strategy_name']}**.\n\n" \
+                    response = f"**[PIT WALL AI]:** The mathematically fastest strategy is a **1-stop {best['strategy_name']}**.\n\n" \
                                f"- **Optimal Pit Window:** Lap {best['optimal_pit_lap']}\n" \
                                f"- **Predicted Race Duration:** {total_duration:.2f} minutes\n\n" \
                                f"We recommend starting on the {best['strategy_name'].split(' -> ')[0]} compound to maximize grip off the line."
@@ -728,7 +803,7 @@ with tab5:
                     compound_leader='MEDIUM',
                     compound_chaser_fresh='HARD'
                 )
-                response = f"**Undercut Risk Assessment:**\n\n" \
+                response = f"**[TELEMETRY DECAY ANALYSIS]:**\n\n" \
                            f"- **Current Threat Level:** `{res_u['threat_level']}`\n" \
                            f"- **Predicted Out-lap Gain:** {res_u['undercut_gain_secs']:.3f} seconds\n" \
                            f"- **Action Required:** {res_u['recommendation']}\n\n" \
@@ -739,7 +814,7 @@ with tab5:
         elif "weather" in query_lower or "temp" in query_lower or "rain" in query_lower:
             if weather:
                 rain_msg = "Rain detected on track! Pit wall needs to monitor intermediate tire windows." if weather['Rainfall'] else "Dry track conditions expected."
-                response = f"**Track Weather Report:**\n\n" \
+                response = f"**[METEOROLOGY DEP]:** Track Weather Report:\n\n" \
                            f"-**Track Temp:** {weather['TrackTemp']:.1f} °C\n" \
                            f"-**Air Temp:** {weather['AirTemp']:.1f} °C\n" \
                            f"-**Humidity:** {weather['Humidity']:.1f} %\n" \

@@ -23,7 +23,8 @@ class RaceSimulator:
                             pit_loss_sc: float = 12.0,
                             sc_laps: list = None,
                             rain_lap: int = None,
-                            rain_intensity: str = None):
+                            rain_intensity: str = None,
+                            driver_offsets: dict = None):
         """
         Runs a lap-by-lap race simulation for multiple drivers under dynamic conditions.
 
@@ -66,6 +67,10 @@ class RaceSimulator:
                 
                 # Predict base lap time on dry track
                 base_lap_time = self.optimizer.predict_lap_time(tyre_life, lap, compound)
+                
+                # Apply driver-specific pace offset if available
+                if driver_offsets and driver in driver_offsets:
+                    base_lap_time += driver_offsets[driver] 
                 
                 final_lap_time = base_lap_time
                 

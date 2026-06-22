@@ -17,6 +17,31 @@ TEAM_COLORS = {
     'rb': '#6692FF',            # Visa Cash App RB Blue
 }
 
+# Driver to Team mapping (FastF1 uses 3-letter driver codes)
+DRIVER_TEAM = {
+    "VER": "red bull",
+    "PER": "red bull",
+    "LEC": "ferrari",
+    "SAI": "ferrari",
+    "HAM": "mercedes",
+    "RUS": "mercedes",
+    "NOR": "mclaren",
+    "PIA": "mclaren",
+    "ALO": "aston martin",
+    "STR": "aston martin",
+    "GAS": "alpine",
+    "OCO": "alpine",
+    "ALB": "williams",
+    "SAR": "williams",
+    "TSU": "sauber",
+    "BOT": "sauber",
+    "ZHO": "sauber",
+    "MAG": "haas",
+    "HUL": "haas",
+    "RIC": "rb",
+    "LAW": "rb"
+}
+
 # Tire Compound Colors (Official Pirelli color scheme)
 TIR_COMPOUND_COLORS = {
     'SOFT': '#FF3333',          # Red
@@ -35,7 +60,18 @@ TEXT_MUTED = '#94A3B8'       # Cool Gray
 ACCENT_CYAN = '#00E5FF'      # Cyber Cyan
 ACCENT_PINK = '#FF007F'      # Cyber Pink
 
-FONT_FAMILY = "Inter, Montserrat, Roboto, Helvetica, Arial, sans-serif"
+FONT_FAMILY = "Orbitron, Inter, Montserrat, Roboto, Helvetica, Arial, sans-serif"
+
+def get_driver_color(driver_code):
+    """
+    Get the official F1 team color for a driver's abbreviation.
+    Defaults to accent cyan if the driver is not mapped.
+    """
+    driver_code = driver_code.upper()
+    team = DRIVER_TEAM.get(driver_code, None)
+    if team:
+        return TEAM_COLORS.get(team, ACCENT_CYAN)
+    return ACCENT_CYAN
 
 def apply_premium_layout(fig, title=""):
     """
@@ -84,4 +120,4 @@ def apply_premium_layout(fig, title=""):
             font=dict(size=10, color=TEXT_LIGHT)
         )
     )
-    return fig  
+    return fig

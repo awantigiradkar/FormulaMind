@@ -1,95 +1,153 @@
-/* Custom Premium Styling for FormulaMind Streamlit App */
+/* Custom Premium F1 Styling for FormulaMind */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
 
-/* Global App Backdrop */
+/* Global App Backdrop with carbon-fiber theme */
 html, body, [data-testid="stAppViewContainer"] {
-    background-color: #0F1219 !important;
-    background-image: radial-gradient(circle at 50% 50%, #171E2D 0%, #0F1219 100%) !important;
+    background-color: #0B0E14 !important;
+    background-image: 
+        radial-gradient(circle at 50% 50%, #121926 0%, #080A0E 100%),
+        linear-gradient(rgba(0, 229, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 229, 255, 0.02) 1px, transparent 1px) !important;
+    background-size: 100% 100%, 20px 20px, 20px 20px !important;
     color: #F1F5F9 !important;
-    font-family: 'Inter', 'Montserrat', -apple-system, sans-serif !important;
+    font-family: 'Inter', sans-serif !important;
 }
 
 /* Sidebar Panel Styling */
 [data-testid="stSidebar"] {
-    background-color: #0B0D13 !important;
-    border-right: 1px solid #1E293B !important;
+    background-color: #06080C !important;
+    border-right: 1px solid #1A2233 !important;
 }
 
 /* Translucent Glassmorphism Cards & Metrics Container */
 div.stCard, div[data-testid="metric-container"] {
-    background: rgba(22, 27, 38, 0.5) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.05) !important;
-    border-radius: 12px !important;
-    padding: 1.5rem !important;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
+    background: linear-gradient(135deg, rgba(18, 24, 38, 0.7) 0%, rgba(10, 13, 20, 0.8) 100%) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(0, 229, 255, 0.1) !important;
+    border-left: 4px solid #00E5FF !important; /* Cyber Cyan accent bar */
+    border-radius: 8px !important;
+    padding: 1.2rem !important;
+    box-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.5) !important;
+    transition: all 0.3s ease !important;
+}
+
+div.stCard:hover, div[data-testid="metric-container"]:hover {
+    border-color: rgba(255, 0, 127, 0.3) !important;
+    box-shadow: 0 10px 30px 0 rgba(0, 229, 255, 0.15) !important;
+    transform: translateY(-2px);
 }
 
 /* Neon Glow F1 Branding Title Text */
 .glow-text {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 800;
+    font-family: 'Orbitron', sans-serif !important;
+    font-weight: 900;
     text-transform: uppercase;
-    letter-spacing: 2px;
-    background: linear-gradient(90deg, #00E5FF, #FF007F);
+    letter-spacing: 4px;
+    background: linear-gradient(90deg, #00E5FF 0%, #FF007F 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    text-shadow: 0 0 20px rgba(0, 229, 255, 0.2);
+    text-shadow: 0 0 25px rgba(0, 229, 255, 0.3);
+    animation: glow-pulse 3s infinite alternate;
+}
+
+@keyframes glow-pulse {
+    0% {
+        filter: drop-shadow(0 0 2px rgba(0, 229, 255, 0.2));
+    }
+    100% {
+        filter: drop-shadow(0 0 10px rgba(255, 0, 127, 0.4));
+    }
 }
 
 /* Custom Nav Tabs Styling */
 button[data-baseweb="tab"] {
     color: #94A3B8 !important;
     background-color: transparent !important;
-    font-size: 16px !important;
-    font-weight: 600 !important;
+    font-family: 'Orbitron', sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    letter-spacing: 1px !important;
     border: none !important;
-    padding: 10px 20px !important;
+    padding: 12px 24px !important;
+    transition: all 0.2s ease !important;
+}
+
+button[data-baseweb="tab"]:hover {
+    color: #F1F5F9 !important;
 }
 
 button[data-baseweb="tab"][aria-selected="true"] {
     color: #00E5FF !important;
     border-bottom: 2px solid #00E5FF !important;
+    text-shadow: 0 0 8px rgba(0, 229, 255, 0.5) !important;
 }
 
 /* Primary Neon Control Button Hover States */
 button[kind="primary"] {
-    background-color: #00E5FF !important;
+    background: linear-gradient(135deg, #00E5FF 0%, #00B4D8 100%) !important;
     color: #0F1219 !important;
-    font-weight: 700 !important;
-    border-radius: 8px !important;
+    font-family: 'Orbitron', sans-serif !important;
+    font-weight: 800 !important;
+    letter-spacing: 1px !important;
+    border-radius: 6px !important;
     border: none !important;
     transition: all 0.3s ease !important;
-    box-shadow: 0 0 10px rgba(0, 229, 255, 0.4) !important;
+    box-shadow: 0 4px 15px rgba(0, 229, 255, 0.3) !important;
 }
 
 button[kind="primary"]:hover {
-    background-color: #00B4D8 !important;
-    box-shadow: 0 0 20px rgba(0, 229, 255, 0.8) !important;
+    background: linear-gradient(135deg, #FF007F 0%, #C70066 100%) !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 4px 20px rgba(255, 0, 127, 0.5) !important;
     transform: translateY(-2px) !important;
-}
-
-/* Layout dividers */
-hr {
-    border-color: rgba(255, 255, 255, 0.05) !important;
 }
 
 /* Metrics styles */
 [data-testid="stMetricLabel"] {
     color: #94A3B8 !important;
-    font-size: 14px !important;
+    font-family: 'Orbitron', sans-serif !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
 }
 
 [data-testid="stMetricValue"] {
-    color: #F1F5F9 !important;
-    font-size: 32px !important;
-    font-weight: 700 !important;
+    color: #00E5FF !important;
+    font-family: 'Orbitron', sans-serif !important;
+    font-size: 28px !important;
+    font-weight: 800 !important;
+    text-shadow: 0 0 10px rgba(0, 229, 255, 0.2) !important;
+}
+
+/* Telemetry-style Chat Log Styling */
+[data-testid="stChatMessage"] {
+    background-color: rgba(18, 24, 38, 0.5) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 8px !important;
+    margin-bottom: 0.8rem !important;
+}
+
+[data-testid="stChatMessage"][role="user"] {
+    border-left: 3px solid #FF007F !important;
+}
+
+[data-testid="stChatMessage"][role="assistant"] {
+    border-left: 3px solid #00E5FF !important;
+}
+
+/* Layout dividers */
+hr {
+    border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 /* Custom Footer layout alignment */
 .footer-text {
     color: #475569;
-    font-size: 12px;
+    font-family: 'Orbitron', sans-serif !important;
+    font-size: 11px;
+    letter-spacing: 1px;
     text-align: center;
     margin-top: 3rem;
     border-top: 1px solid rgba(255, 255, 255, 0.05);

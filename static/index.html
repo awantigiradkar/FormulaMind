@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FormulaMind — AI F1 Telemetry & Strategy Simulator</title>
+    <!-- Modern Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Custom F1 styled stylesheet -->
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Plotly.js Library CDN -->
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+</head>
+<body>
+    <!-- Background Racing Cars Animations Layer -->
+    <div class="bg-animation-container">
+        <div class="moving-car car-1">
+            <svg viewBox="0 0 100 30" fill="none" stroke="#00E5FF" stroke-width="1.2">
+                <path d="M 5,20 L 15,20 L 18,17 L 25,17 L 27,20 L 40,20 L 43,12 L 48,12 L 53,16 L 68,17 L 73,12 L 78,12 L 80,18 L 90,18 L 92,10 L 95,10 L 96,20 L 90,20 L 88,24 L 80,24 L 78,20 L 27,20 L 25,24 L 17,24 L 15,20 Z" />
+                <circle cx="84" cy="22" r="4.5" fill="#0B0E14" stroke="#00E5FF" stroke-width="1.2" />
+                <circle cx="21" cy="22" r="4.5" fill="#0B0E14" stroke="#00E5FF" stroke-width="1.2" />
+                <circle cx="50" cy="14" r="2" fill="#FF007F" />
+            </svg>
+        </div>
+        <div class="moving-car car-2">
+            <svg viewBox="0 0 100 30" fill="none" stroke="#FF007F" stroke-width="1.2">
+                <path d="M 5,20 L 15,20 L 18,17 L 25,17 L 27,20 L 40,20 L 43,12 L 48,12 L 53,16 L 68,17 L 73,12 L 78,12 L 80,18 L 90,18 L 92,10 L 95,10 L 96,20 L 90,20 L 88,24 L 80,24 L 78,20 L 27,20 L 25,24 L 17,24 L 15,20 Z" />
+                <circle cx="84" cy="22" r="4.5" fill="#0B0E14" stroke="#FF007F" stroke-width="1.2" />
+                <circle cx="21" cy="22" r="4.5" fill="#0B0E14" stroke="#FF007F" stroke-width="1.2" />
+                <circle cx="50" cy="14" r="2" fill="#00E5FF" />
+            </svg>
+        </div>
+        <div class="moving-car car-3">
+            <svg viewBox="0 0 100 30" fill="none" stroke="#8A2BE2" stroke-width="1.2">
+                <path d="M 5,20 L 15,20 L 18,17 L 25,17 L 27,20 L 40,20 L 43,12 L 48,12 L 53,16 L 68,17 L 73,12 L 78,12 L 80,18 L 90,18 L 92,10 L 95,10 L 96,20 L 90,20 L 88,24 L 80,24 L 78,20 L 27,20 L 25,24 L 17,24 L 15,20 Z" />
+                <circle cx="84" cy="22" r="4.5" fill="#0B0E14" stroke="#8A2BE2" stroke-width="1.2" />
+                <circle cx="21" cy="22" r="4.5" fill="#0B0E14" stroke="#8A2BE2" stroke-width="1.2" />
+                <circle cx="50" cy="14" r="2" fill="#FF007F" />
+            </svg>
+        </div>
+    </div>
+
+    <div id="telemetry-loader" class="loader-overlay">
+        <div class="loader-box">
+            <div class="f1-start-lights">
+                <div class="light-unit" id="light-1"><div class="bulbs"></div></div>
+                <div class="light-unit" id="light-2"><div class="bulbs"></div></div>
+                <div class="light-unit" id="light-3"><div class="bulbs"></div></div>
+                <div class="light-unit" id="light-4"><div class="bulbs"></div></div>
+                <div class="light-unit" id="light-5"><div class="bulbs"></div></div>
+            </div>
+            <div class="loader-text" id="loader-status">WARMING TYRES...</div>
+        </div>
+    </div>
+
+
+    <!-- Main Viewport Grid -->
+    <div class="app-container">
+        
+        <!-- Platform Header HUD -->
+        <header class="app-header">
+            <div class="header-logo">
+                <span class="logo-text glow-text">FORMULAMIND</span>
+                <span class="logo-subtext">// PIT WALL ENGINE</span>
+            </div>
+            
+            <!-- Live telemetry weather telemetry indicators -->
+            <div class="header-hud">
+                <div class="hud-item">
+                    <span class="hud-label">TRACK TEMP</span>
+                    <span class="hud-value" id="hud-track-temp">--.- °C</span>
+                </div>
+                <div class="hud-item">
+                    <span class="hud-label">AIR TEMP</span>
+                    <span class="hud-value" id="hud-air-temp">--.- °C</span>
+                </div>
+                <div class="hud-item">
+                    <span class="hud-label">HUMIDITY</span>
+                    <span class="hud-value" id="hud-humidity">--%</span>
+                </div>
+                <div class="hud-item">
+                    <span class="hud-label">WEATHER STATUS</span>
+                    <span class="hud-value" id="hud-rain-status">OFFLINE</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Sidebar (Left) + Dashboard Viewport (Right) -->
+        <div class="main-layout">
+            
+            <!-- Sidebar Controls -->
+            <aside class="sidebar">
+                <div class="sidebar-section">
+                    <h3>Timing API Settings</h3>
+                    
+                    <div class="form-group">
+                        <label for="select-season">Season</label>
+                        <select id="select-season">
+                            <option value="2021">2021 Season</option>
+                            <option value="2022">2022 Season</option>
+                            <option value="2023" selected>2023 Season</option>
+                            <option value="2024">2024 Season</option>
+                            <option value="2025">2025 Season</option>
+                            <option value="2026">2026 Season</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="select-gp">Grand Prix</label>
+                        <select id="select-gp" disabled>
+                            <option>Loading schedule...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="select-session">Session</label>
+                        <select id="select-session">
+                            <option value="Qualifying (Q)">Qualifying (Q)</option>
+                            <option value="Race (R)">Race (R)</option>
+                        </select>
+                    </div>
+
+                    <button id="btn-connect" class="btn btn-primary">Connect Timing API</button>
+                    
+                    <div class="api-status">
+                        <span id="api-status-indicator" class="status-dot offline"></span>
+                        <span id="api-status-text">OFFLINE</span>
+                    </div>
+                </div>
+
+                <div class="sidebar-section hidden" id="ml-model-info">
+                    <h3>Active AI Model</h3>
+                    <div class="model-metric">
+                        <span class="metric-label">Trained on</span>
+                        <span class="metric-val" id="model-val-gp">--</span>
+                    </div>
+                    <div class="model-metric">
+                        <span class="metric-label">Mean Absolute Error</span>
+                        <span class="metric-val" id="model-val-mae">-- s</span>
+                    </div>
+                    <div class="model-metric">
+                        <span class="metric-label">R² Accuracy Score</span>
+                        <span class="metric-val" id="model-val-r2">--%</span>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Dashboard Tabs Viewport -->
+            <main class="dashboard-viewport">
+                <!-- Nav Bar Tabs -->
+                <nav class="nav-tabs">
+                    <button class="tab-link active" data-tab="tab-home">Latest</button>
+                    <button class="tab-link" data-tab="tab-telemetry">Live Timings</button>
+                    <button class="tab-link" data-tab="tab-strategy">Stint Optimizer</button>
+                    <button class="tab-link" data-tab="tab-undercut">Undercut Tracker</button>
+                    <button class="tab-link" data-tab="tab-simulator">Multi-Agent Sim</button>
+                    <button class="tab-link" data-tab="tab-chatbot">Pit Wall Chat</button>
+                </nav>
+
+                <!-- TAB Content Panes -->
+                <div class="tab-container">
+                    
+                    <!-- TAB 0: HOME LANDING PAGE (PREMIUM F1 PORTAL) -->
+                    <div id="tab-home" class="tab-pane active">
+                        
+                        <!-- Hero Section with Canvas Interactive Trails -->
+                        <div class="f1-hero-section">
+                            <!-- Background Canvas for Speed Particles -->
+                            <canvas id="speed-canvas"></canvas>
+                            <div class="hero-left-content">
+                                <div class="badge-live-feed">
+                                    <span class="live-blink-dot"></span>
+                                    <span>LIVE TIMING HUB</span>
+                                </div>
+                                <h1 class="hero-main-title">Race Weekend Begins</h1>
+                                
+                                <!-- Racing Countdown Clock -->
+                                <div class="countdown-container">
+                                    <span class="cd-title" id="countdown-title">NEXT SESSION COUNTDOWN</span>                                    <div class="countdown-display" id="countdown-clock">
+                                        <div class="cd-segment"><span class="cd-num" id="cd-days">03</span><span class="cd-lbl">DAYS</span></div>
+                                        <div class="cd-segment"><span class="cd-num" id="cd-hours">14</span><span class="cd-lbl">HRS</span></div>
+                                        <div class="cd-segment"><span class="cd-num" id="cd-mins">28</span><span class="cd-lbl">MINS</span></div>
+                                        <div class="cd-segment"><span class="cd-num" id="cd-secs">12</span><span class="cd-lbl">SECS</span></div>
+                                    </div>
+                                </div>
+                                <p class="hero-description">Welcome to FormulaMind. Connect directly to timing API endpoints, analyze driver speed profiles, detect apex deceleration, and simulate pit lane stint strategies.</p>
+                                
+                                <div class="hero-cta-buttons">
+                                    <button class="btn btn-primary" onclick="launchLiveTiming()">Launch Console</button>
+                                    <button class="btn btn-secondary" onclick="scrollToDrivers()">Explore Grid</button>
+                                </div>
+                            </div>
+                            <div class="hero-right-image">
+                                <img src="assets/f1_hero_car.png" alt="Oracle Red Bull F1 Car" class="f1-car-image">
+                            </div>
+                        </div>
+                        <!-- Drivers Section: Horizontal scrolling cards -->
+                        <div class="f1-portal-section" id="section-drivers">
+                            <h2 class="section-title">F1 Grid Leaders</h2>
+                            <div class="drivers-horizontal-track">
+                                
+                                <!-- Card 1: VER -->
+                                <div class="driver-card" style="--team-color: #3671C6;" onclick="selectGridDriver('VER')">
+                                    <div class="card-glow"></div>
+                                    <div class="driver-number">1</div>
+                                    <div class="driver-details">
+                                        <span class="d-team-badge">RED BULL RACING</span>
+                                        <h3 class="d-name">Max Verstappen</h3>
+                                        <span class="d-nationality">🇳🇱 Dutch</span>
+                                    </div>
+                                    <div class="driver-hover-stats">
+                                        <div class="stat-row"><span>Top Speed Rating</span><strong>98</strong></div>
+                                        <div class="stat-row"><span>Apex Grip Control</span><strong>97</strong></div>
+                                        <div class="stat-row"><span>Braking Precision</span><strong>96</strong></div>
+                                    </div>
+                                </div>
+                                <!-- Card 2: HAM -->
+                                <div class="driver-card" style="--team-color: #27F4D2;" onclick="selectGridDriver('HAM')">
+                                    <div class="card-glow"></div>
+                                    <div class="driver-number">44</div>
+                                    <div class="driver-details">
+                                        <span class="d-team-badge">MERCEDES AMG</span>
+                                        <h3 class="d-name">Lewis Hamilton</h3>
+                                        <span class="d-nationality">🇬🇧 British</span>
+                                    </div>
+                                    <div class="driver-hover-stats">
+                                        <div class="stat-row"><span>Top Speed Rating</span><strong>96</strong></div>
+                                        <div class="stat-row"><span>Apex Grip Control</span><strong>95</strong></div>
+                                        <div class="stat-row"><span>Braking Precision</span><strong>98</strong></div>
+                                    </div>
+                                </div>
+                                <!-- Card 3: NOR -->
+                                <div class="driver-card" style="--team-color: #F58020;" onclick="selectGridDriver('NOR')">
+                                    <div class="card-glow"></div>
+                                    <div class="driver-number">4</div>
+                                    <div class="driver-details">
+                                        <span class="d-team-badge">MCLAREN F1</span>
+                                        <h3 class="d-name">Lando Norris</h3>
+                                        <span class="d-nationality">🇬🇧 British</span>
+                                    </div>
+                                    <div class="driver-hover-stats">
+                                        <div class="stat-row"><span>Top Speed Rating</span><strong>95</strong></div>
+                                        <div class="stat-row"><span>Apex Grip Control</span><strong>96</strong></div>
+                                        <div class="stat-row"><span>Braking Precision</span><strong>95</strong></div>
+                                    </div>
+                                </div>
+                                <!-- Card 4: LEC -->
+                                <div class="driver-card" style="--team-color: #F91536;" onclick="selectGridDriver('LEC')">
+                                    <div class="card-glow"></div>
+                                    <div class="driver-number">16</div>
+                                    <div class="driver-details">
+                                        <span class="d-team-badge">SCUDERIA FERRARI</span>
+                                        <h3 class="d-name">Charles Leclerc</h3>
+                                        <span class="d-nationality">🇲🇨 Monégasque</span>
+                                    </div>
+                                    <div class="driver-hover-stats">
+                                        <div class="stat-row"><span>Top Speed Rating</span><strong>96</strong></div>
+                                        <div class="stat-row"><span>Apex Grip Control</span><strong>94</strong></div>
+                                        <div class="stat-row"><span>Braking Precision</span><strong>97</strong></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Calendar & Fan Engagement split row -->
+                        <div class="f1-portal-split-row">
+                            <!-- Calendar Map Cards -->
+                            <div class="calendar-panel card">
+                                <h3>Upcoming Race Calendar</h3>
+                                <div class="calendar-list">
+                                    
+                                    <div class="calendar-item">
+                                        <div class="track-details">
+                                            <span class="track-country">AUSTRIA</span>
+                                            <h4 class="track-circuit">Red Bull Ring</h4>
+                                            <span class="track-date">ROUND 08 // JUNE 26-28</span>
+                                        </div>
+                                        <div class="track-badge">POWER</div>
+                                    </div>
+                                    <div class="calendar-item active-track">
+                                        <div class="track-details">
+                                            <span class="track-country">GREAT BRITAIN</span>
+                                            <h4 class="track-circuit">Silverstone Circuit</h4>
+                                            <span class="track-date">ROUND 09 // JULY 03-05</span>
+                                        </div>
+                                        <div class="track-badge">SPEED</div>
+                                    </div>
+                                    <div class="calendar-item">
+                                        <div class="track-details">
+                                            <span class="track-country">BELGIUM</span>
+                                            <h4 class="track-circuit">Spa-Francorchamps</h4>
+                                            <span class="track-date">ROUND 10 // JULY 17-19</span>
+                                        </div>
+                                        <div class="track-badge">CLASSIC</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Driver of the day widget -->
+                            <div class="fan-widget card">
+                                <h3>Driver of the Day Vote</h3>
+                                <p class="help-text" style="font-size: 11px; margin-top: -0.5rem;">Select your driver to cast a vote and update live statistics:</p>
+                                <div class="vote-poll" id="dotd-poll">
+                                    
+                                    <div class="poll-option" onclick="castVote('VER')">
+                                        <div class="poll-header">
+                                            <span>VER (Red Bull)</span>
+                                            <span id="pct-VER">32%</span>
+                                        </div>
+                                        <div class="poll-bar-track">
+                                            <div class="poll-bar-fill" id="bar-VER" style="width: 32%; background-color: #3671C6;"></div>
+                                        </div>
+                                    </div>
+                                    <div class="poll-option" onclick="castVote('HAM')">
+                                        <div class="poll-header">
+                                            <span>HAM (Mercedes)</span>
+                                            <span id="pct-HAM">28%</span>
+                                        </div>
+                                        <div class="poll-bar-track">
+                                            <div class="poll-bar-fill" id="bar-HAM" style="width: 28%; background-color: #27F4D2;"></div>
+                                        </div>
+                                    </div>
+                                    <div class="poll-option" onclick="castVote('NOR')">
+                                        <div class="poll-header">
+                                            <span>NOR (McLaren)</span>
+                                            <span id="pct-NOR">22%</span>
+                                        </div>
+                                        <div class="poll-bar-track">
+                                            <div class="poll-bar-fill" id="bar-NOR" style="width: 22%; background-color: #F58020;"></div>
+                                        </div>
+                                    </div>
+                                    <div class="poll-option" onclick="castVote('LEC')">
+                                        <div class="poll-header">
+                                            <span>LEC (Ferrari)</span>
+                                            <span id="pct-LEC">18%</span>
+                                        </div>
+                                        <div class="poll-bar-track">
+                                            <div class="poll-bar-fill" id="bar-LEC" style="width: 18%; background-color: #F91536;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- TAB 1: TELEMETRY ANALYZER -->
+                    <div id="tab-telemetry" class="tab-pane">
+                        <div class="pane-header">
+                            <h2>Telemetry Driver Comparison</h2>
+                            <p>Compare two drivers' telemetry lines aligned by distance. Plots speed, pedal overlays, and track dominance.</p>
+                        </div>
+                        
+                        <div class="driver-selectors card">
+                            <div class="selector-row">
+                                <div class="form-group">
+                                    <label for="select-driver-a">Select Driver A</label>
+                                    <select id="select-driver-a" class="driver-select" disabled>
+                                        <option value="">Connect API First</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="select-driver-b">Select Driver B</label>
+                                    <select id="select-driver-b" class="driver-select" disabled>
+                                        <option value="">Connect API First</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Timing Delta Metrics Row -->
+                        <div class="metrics-row hidden" id="telemetry-metrics">
+                            <div class="metric-card">
+                                <span class="m-label" id="label-lap-a">Driver A Lap</span>
+                                <span class="m-value" id="val-lap-a">--.--- s</span>
+                            </div>
+                            <div class="metric-card">
+                                <span class="m-label" id="label-lap-b">Driver B Lap</span>
+                                <span class="m-value" id="val-lap-b">--.--- s</span>
+                            </div>
+                            <div class="metric-card">
+                                <span class="m-label">Relative Gap</span>
+                                <span class="m-value" id="val-delta">--.--- s</span>
+                            </div>
+                        </div>
+
+                        <!-- Sector Comparison Row -->
+                        <div class="metrics-row hidden" id="sector-metrics">
+                            <div class="metric-card sector-card">
+                                <span class="m-label">Sector 1 Gap</span>
+                                <span class="m-value" id="val-sec1">--.--- s</span>
+                            </div>
+                            <div class="metric-card sector-card">
+                                <span class="m-label">Sector 2 Gap</span>
+                                <span class="m-value" id="val-sec2">--.--- s</span>
+                            </div>
+                            <div class="metric-card sector-card">
+                                <span class="m-label">Sector 3 Gap</span>
+                                <span class="m-value" id="val-sec3">--.--- s</span>
+                            </div>
+                        </div>
+
+                        <!-- Telemetry Visualizer Chart Plots -->
+                        <div class="telemetry-charts hidden" id="telemetry-plots">
+                            <div class="chart-container card">
+                                <div id="plot-speed" class="plotly-div"></div>
+                            </div>
+                            <div class="chart-row">
+                                <div class="chart-container card half">
+                                    <div id="plot-pedals" class="plotly-div"></div>
+                                </div>
+                                <div class="chart-container card half">
+                                    <div id="plot-gears" class="plotly-div"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="chart-row">
+                                <div class="chart-container card half">
+                                    <div id="plot-scorecard" class="plotly-div"></div>
+                                </div>
+                                <div class="chart-container card half">
+                                    <div id="plot-dominance" class="plotly-div"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: STINT OPTIMIZER -->
+                    <div id="tab-strategy" class="tab-pane">
+                        <div class="pane-header">
+                            <h2>AI Race Strategy & Stint Optimizer</h2>
+                            <p>Simulate stint strategies and forecast tire wear limits based on trained dynamic parameters.</p>
+                        </div>
+
+                        <div class="strategy-layout">
+                            <!-- Left Controls -->
+                            <div class="strategy-controls">
+                                <div class="card stint-config-card">
+                                    <h3>Optimization Constants</h3>
+                                    
+                                    <div class="form-group">
+                                        <label for="select-opt-driver">Optimize Driver Pace</label>
+                                        <select id="select-opt-driver" disabled>
+                                            <option value="">Average Grid</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="input-race-laps">Total Race Laps</label>
+                                        <input type="number" id="input-race-laps" min="10" max="75" value="52">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="input-pit-loss">Pit Lane Time Loss (Seconds)</label>
+                                        <input type="number" id="input-pit-loss" min="10" max="45" value="20" step="0.5">
+                                    </div>
+
+                                    <button id="btn-run-optimizer" class="btn btn-primary">Calculate Optimal Strategies</button>
+                                </div>
+
+                                <div class="card stint-predictor-card">
+                                    <h3>Single Compound Predictor</h3>
+                                    
+                                    <div class="form-group">
+                                        <label for="select-decay-compound">Tyre Compound</label>
+                                        <select id="select-decay-compound">
+                                            <option value="SOFT">SOFT</option>
+                                            <option value="MEDIUM" selected>MEDIUM</option>
+                                            <option value="HARD">HARD</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="input-decay-start">Start Lap (Fuel Weight Factor)</label>
+                                        <input type="number" id="input-decay-start" min="1" max="70" value="1">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="input-decay-life">Target Stint Length (Laps)</label>
+                                        <input type="number" id="input-decay-life" min="1" max="40" value="25">
+                                    </div>
+
+                                    <div class="checkbox-group">
+                                        <input type="checkbox" id="check-fuel-correction" checked>
+                                        <label for="check-fuel-correction">Enable Fuel Correction (+0.065s/lap)</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right Display -->
+                            <div class="strategy-charts">
+                                <div id="stint-cliff-warning" class="warning-alert hidden"></div>
+                                <div class="chart-container card">
+                                    <div id="plot-decay" class="plotly-div"></div>
+                                </div>
+
+                                <div class="ranked-strategies-container card">
+                                    <h3>Optimal Strategies Ranked</h3>
+                                    <div id="ranked-strategies-list">
+                                        <p class="placeholder-text">Connect API and click 'Calculate Optimal Strategies' to simulate stints.</p>
+                                    </div>
+                                </div>
+
+                                <div class="traffic-planner-container card">
+                                    <h3>🚦 Pit Stop Traffic Window Planner</h3>
+                                    <p>Projects competitor spacing at pit entry window to evaluate clean track gaps vs dirty air zones.</p>
+                                    <div class="table-scroll-container">
+                                        <table class="telemetry-table" id="traffic-planner-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Pit Stop Lap</th>
+                                                    <th>Re-entry Status</th>
+                                                    <th>Track Window Details</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td colspan="3" class="placeholder-text">No active strategy simulation.</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: UNDERCUT TRACKER -->
+                    <div id="tab-undercut" class="tab-pane">
+                        <div class="pane-header">
+                            <h2>Live Pit Lane Undercut Analyzer</h2>
+                            <p>Enter timing parameters for a leading and chasing driver to evaluate the undercut threat delta.</p>
+                        </div>
+
+                        <div class="undercut-layout">
+                            <div class="undercut-controls card">
+                                <h3>Track Gap Variables</h3>
+                                <div class="form-group">
+                                    <label for="input-uc-gap">Current Gap to Leader (Seconds)</label>
+                                    <input type="range" id="input-uc-gap" min="0.2" max="5.0" value="1.2" step="0.1">
+                                    <span class="range-value" id="val-uc-gap">1.2 s</span>
+                                </div>
+                                <div class="form-group">
+                                    <label for="input-uc-lap">Current Race Lap Number</label>
+                                    <input type="number" id="input-uc-lap" min="1" max="70" value="25">
+                                </div>
+
+                                <hr>
+                                <h3>Leader Status (Staying Out)</h3>
+                                <div class="form-group">
+                                    <label for="select-uc-leader-comp">Tyre Compound</label>
+                                    <select id="select-uc-leader-comp">
+                                        <option value="SOFT">SOFT</option>
+                                        <option value="MEDIUM" selected>MEDIUM</option>
+                                        <option value="HARD">HARD</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="input-uc-leader-age">Leader Tyre Age (Laps Run)</label>
+                                    <input type="number" id="input-uc-leader-age" min="1" max="40" value="15">
+                                </div>
+
+                                <hr>
+                                <h3>Chaser Status (Pitting on Current Lap)</h3>
+                                <div class="form-group">
+                                    <label for="select-uc-chaser-comp">Fresh Tyre Compound</label>
+                                    <select id="select-uc-chaser-comp">
+                                        <option value="SOFT">SOFT</option>
+                                        <option value="MEDIUM">MEDIUM</option>
+                                        <option value="HARD" selected>HARD</option>
+                                    </select>
+                                </div>
+                                <button id="btn-run-undercut" class="btn btn-primary">Calculate Undercut Threat</button>
+                            </div>
+
+                            <div class="undercut-results">
+                                <div id="undercut-threat-box" class="threat-alert status-safe">
+                                    <h3 id="uc-threat-level">THREAT STATUS: OFFLINE</h3>
+                                    <p id="uc-threat-recommendation">Connect session and click 'Calculate Undercut Threat' to evaluate.</p>
+                                </div>
+
+                                <div class="undercut-metrics card">
+                                    <div class="uc-metric">
+                                        <span class="uc-metric-label">Leader Out-lap (Worn)</span>
+                                        <span class="uc-metric-value" id="val-uc-leader-pace">--.-- s</span>
+                                    </div>
+                                    <div class="uc-metric">
+                                        <span class="uc-metric-label">Chaser Out-lap (Fresh)</span>
+                                        <span class="uc-metric-value" id="val-uc-chaser-pace">--.-- s</span>
+                                    </div>
+                                    <div class="uc-metric">
+                                        <span class="uc-metric-label">Out-lap Undercut Gain</span>
+                                        <span class="uc-metric-value" id="val-uc-gain">--.-- s</span>
+                                    </div>
+                                    <div class="uc-metric">
+                                        <span class="uc-metric-label">Resulting Gap Post-Pit</span>
+                                        <span class="uc-metric-value" id="val-uc-new-gap">--.-- s</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 4: MULTI-AGENT SIMULATOR -->
+                    <div id="tab-simulator" class="tab-pane">
+                        <div class="pane-header">
+                            <h2>Multi-Driver Strategy Race Simulator</h2>
+                            <p>Simulate a lap-by-lap race under dynamic track conditions (Safety Cars and rain weather).</p>
+                        </div>
+
+                        <div class="simulator-layout">
+                            <!-- Configurations -->
+                            <div class="simulator-config-panel card">
+                                <h3>Driver Strategy Configurations</h3>
+                                <p class="help-text">Select drivers and define stint parameters (e.g. Medium, Hard with pit stops):</p>
+                                
+                                <!-- Add Driver Slot Button -->
+                                <button id="btn-sim-add-slot" class="btn btn-secondary" style="width: 100%; margin-bottom: 1rem;">+ Add Driver Slot</button>
+                                <div id="sim-drivers-config-list">
+                                    <p class="placeholder-text">Add drivers to start configuring strategies.</p>
+                                </div>
+
+                                <hr>
+                                <h3>Dynamic Events</h3>
+                                <div class="form-group">
+                                    <label for="input-sim-sc">Safety Car Laps (comma separated)</label>
+                                    <input type="text" id="input-sim-sc" value="35,36,37">
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="check-sim-rain">
+                                    <label for="check-sim-rain">Trigger Rain Weather</label>
+                                </div>
+                                <div class="form-group hidden" id="sim-rain-params">
+                                    <label for="input-sim-rain-lap">Rain Begins on Lap</label>
+                                    <input type="number" id="input-sim-rain-lap" value="42" min="1" max="52">
+                                    
+                                    <label for="select-sim-rain-int">Rain Severity</label>
+                                    <select id="select-sim-rain-int">
+                                        <option value="LIGHT" selected>LIGHT</option>
+                                        <option value="HEAVY">HEAVY</option>
+                                    </select>
+                                </div>
+
+                                <button id="btn-run-sim" class="btn btn-primary btn-large">Start Race Simulation</button>
+                            </div>
+
+                            <!-- Live Board Display -->
+                            <div class="simulator-results-panel">
+                                <div class="card standings-board">
+                                    <h3>Final Standings Board</h3>
+                                    <div class="table-scroll-container">
+                                        <table class="telemetry-table" id="standings-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Pos</th>
+                                                    <th>Driver</th>
+                                                    <th>Final Tyre</th>
+                                                    <th>Race Time</th>
+                                                    <th>Gap to Winner</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td colspan="5" class="placeholder-text">Set tyre stints and click 'Start Race Simulation'.</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="chart-container card">
+                                    <div id="plot-sim-pos" class="plotly-div"></div>
+                                </div>
+                                <div class="chart-container card">
+                                    <div id="plot-sim-laps" class="plotly-div"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 5: AI ASSISTANT -->
+                    <div id="tab-chatbot" class="tab-pane">
+                        <div class="pane-header">
+                            <h2>Pit Wall AI Strategy Assistant</h2>
+                            <p>Ask the AI Race Engineer questions about race strategies, undercut threats, or track weather conditions.</p>
+                        </div>
+ 
+                        <div class="chat-layout-wrapper">
+                            <!-- Left: Guidance Panel -->
+                            <div class="chat-guide-panel card">
+                                <h3>Pit Wall COMM Guide</h3>
+                                <p class="help-text">The AI Engineer responds to specific pit wall queries. Click any query to load it:</p>
+                                
+                                <div class="guide-section">
+                                    <h4>Strategy & Pit Stops</h4>
+                                    <ul>
+                                        <li onclick="autoFillChat('What is the fastest strategy?')">"What is the fastest strategy?"</li>
+                                        <li onclick="autoFillChat('When should we pit stop?')">"When should we pit stop?"</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="guide-section">
+                                    <h4>Undercut Threats</h4>
+                                    <ul>
+                                        <li onclick="autoFillChat('Is the chaser an undercut threat?')">"Is the chaser an undercut threat?"</li>
+                                        <li onclick="autoFillChat('Are we safe from undercut threat?')">"Are we safe from undercut threat?"</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="guide-section">
+                                    <h4>Weather & Track Temp</h4>
+                                    <ul>
+                                        <li onclick="autoFillChat('What are the weather conditions?')">"What are the weather conditions?"</li>
+                                        <li onclick="autoFillChat('What is the track temperature?')">"What is the track temperature?"</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <!-- Right: Chat Terminal -->
+                            <div class="chat-container-layout card">
+                                <!-- Messages Log -->
+                                <div class="chat-messages-log" id="chat-messages-box">
+                                    <div class="chat-message assistant">
+                                        <div class="message-sender">[RADIO COMM] AI ENGINEER</div>
+                                        <div class="message-content">Copy that. F1 AI Race Engineer online. Ask me about track weather, undercut threats, or optimal pit strategies.</div>
+                                    </div>
+                                </div>
+ 
+                                <!-- Input Form -->
+                                <div class="chat-input-row">
+                                    <input type="text" id="chat-input-text" placeholder="Ask a question...">
+                                    <button id="btn-chat-send" class="btn btn-primary">Send</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </main>
+        </div>
+
+        <footer class="app-footer">
+            <span>FormulaMind — AI F1 Strategy Platform | Built with FastF1 API, Plotly.js & FastAPI | Powered by Scikit-Learn</span>
+        </footer>
+    </div>
+
+    <!-- Frontend logic controller -->
+    <script src="js/app.js"></script>
+</body>
+</html>
