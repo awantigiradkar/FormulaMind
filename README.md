@@ -4,11 +4,11 @@ FormulaMind is a full-stack, data-driven F1 Race Engineering console. It connect
 
 ---
 ## Live Application Links
-* **Hugging Face Space**: [https://huggingface.co/spaces/awantigiradkar/FormulaMind](https://huggingface.co/spaces/awantigiradkar/FormulaMind)
-* **Direct Fullscreen Application**: [https://awantigiradkar-formulamind.hf.space](https://awantigiradkar-formulamind.hf.space)
+* **Direct Application**: [https://awantigiradkar-formulamind.hf.space](https://awantigiradkar-formulamind.hf.space)
 
 ### 🖥️ Dashboard Console View
-![FormulaMind Dashboard Mockup](static/assets/website_mockup.png)
+<img width="946" height="412" alt="Screenshot 2026-06-22 230656" src="https://github.com/user-attachments/assets/5602bbf8-75d9-46a3-809b-d86c7fbd24dd" />
+
 ---
 
 ## What Everything Is & How It Works
