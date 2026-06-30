@@ -1,6 +1,6 @@
 # FormulaMind - F1 Strategy & Telemetry Platform
 
-FormulaMind is a full-stack, data-driven F1 Race Engineering console. It connects directly to live timing and telemetry databases to optimize pit stint strategies, analyze undercut threats, compare driver speed profiles, and simulate multi-agent race scenarios under dynamic track conditions (like Safety Cars and rain weather).
+FormulaMind is a full-stack, data-driven F1 Race Engineering console. It connects directly to live timing and telemetry databases to optimize pit stint strategies, analyze undercut threats, compare driver speed profiles, and simulate multi-agent race scenarios under dynamic track conditions (like Safety Cars and rain weather). 
 
 ---
 ## Live Application Links
